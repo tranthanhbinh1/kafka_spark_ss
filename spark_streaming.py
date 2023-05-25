@@ -1,27 +1,39 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import explode
 from pyspark.sql.functions import from_json, col
 
-def process_streaming_data(bootstrap_servers, topic):
-    spark = SparkSession.builder.appName("StockDashboard").getOrCreate()
+# Define the Kafka broker and topic
+bootstrap_servers = "localhost:29092"
+topic = "stock_analyzer"
 
-    # Define the schema for the stock data
-    schema = "value string"
+spark = SparkSession.builder.appName("StockDashboard").getOrCreate()
 
-    # Read the streaming data from Kafka
-    df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", bootstrap_servers).option("subscribe", topic).load()
+# Define the schema for the stock data
+schema = "value string"
 
-    # Apply the schema and convert the value column from Kafka to JSON format
-    df = df.withColumn("value", col("value").cast("string"))
-    df = df.withColumn("jsonData", from_json("value", schema))
+# Read the streaming data from Kafka
+df = spark.readStream.format("kafka")\
+    .option("kafka.bootstrap.servers", bootstrap_servers)\
+    .option("subscribe", topic).load()
 
-    # Extract the relevant fields from the JSON data
-    df = df.select("jsonData.*")
+# Apply the schema and convert the value column from Kafka to JSON format
+df = df.withColumn("value", col("value").cast("string"))
+df = df.withColumn("jsonData", from_json("value", schema))
 
-    # Perform any desired transformations or computations on the streaming data
-    
-    # Write the processed data to the desired sink
+# Extract the relevant fields from the JSON data
+df = df.select("jsonData.*")
 
-    query = df.writeStream...
+# Transformation
+df = df.selectExpr("s", "explode(c) as c", "explode(h) as h", "explode(l) as l", "explode(o) as o", "explode(t) as t", "explode(v) as v")
 
-    # Start the streaming query
-    query.start().awaitTermination()
+# Write the processed data to the desired sink
+
+# query = df.writeStream.format("json") \
+#     .option("path", "stock_data.json") \
+#     .option("checkpointLocation", "checkpoint") \
+#     .start()
+
+query = df.writeStream.format("console").start()
+
+# Start the streaming query
+query.start().awaitTermination()
