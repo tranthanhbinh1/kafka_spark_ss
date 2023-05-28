@@ -11,11 +11,6 @@ spark = SparkSession.builder.appName("StockDashboard").getOrCreate()
 # Define the schema for the stock data
 schema = "value string"
 
-# # Read the streaming data from Kafka
-# df = spark.readStream.format("kafka")\
-#     .option("kafka.bootstrap.servers", bootstrap_server)\
-#     .option("subscribe", topic).load()
-
 df = spark \
   .readStream \
   .format("kafka") \
