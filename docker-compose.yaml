@@ -24,6 +24,8 @@ services:
   
   kafka-connect:
     image: confluentinc/cp-kafka-connect:latest
+    volumes:
+      - /home/tb24/projects/Datalake-project/docker-compose/kafka-connect.properties:/etc/kafka/connect
     depends_on:
       - kafka
     ports:
